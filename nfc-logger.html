@@ -17,10 +17,16 @@
   <script>
     const scanBtn = document.getElementById('scanBtn');
     const status = document.getElementById('status');
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID_HERE/exec';
 
-    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzJJK-7TfgxLYQBYN9ht94FbqjuFFxL3JuGuvb0o7RxMeipMMN2pS-k-0o_2ex9GXZZ9A/exec';
+    let isScanning = false; // prevent re-attaching listeners
 
     scanBtn.addEventListener('click', async () => {
+      if (isScanning) {
+        status.textContent = 'Already scanning. Tap a card.';
+        return;
+      }
+
       if (!('NDEFReader' in window)) {
         status.textContent = 'Web NFC not supported. Use Chrome on Android.';
         return;
@@ -29,12 +35,19 @@
       try {
         const ndef = new NDEFReader();
         await ndef.scan();
+        isScanning = true;
 
         status.textContent = 'Scanning... Tap a card.';
 
         ndef.onreading = async (event) => {
           const uid = event.serialNumber;
+          if (!uid) {
+            status.textContent = '❌ No UID detected.';
+            return;
+          }
+
           status.textContent = `Card UID: ${uid}`;
+          console.log(`Sending UID to Google: ${uid}`);
 
           try {
             const response = await fetch(`${GOOGLE_SCRIPT_URL}?uid=${encodeURIComponent(uid)}`);
