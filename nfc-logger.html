@@ -18,7 +18,7 @@
     const scanBtn = document.getElementById('scanBtn');
     const status = document.getElementById('status');
 
-    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID_HERE/exec';
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzJJK-7TfgxLYQBYN9ht94FbqjuFFxL3JuGuvb0o7RxMeipMMN2pS-k-0o_2ex9GXZZ9A/exec';
 
     scanBtn.addEventListener('click', async () => {
       if (!('NDEFReader' in window)) {
@@ -32,22 +32,8 @@
 
         status.textContent = 'Scanning... Tap a card.';
 
-        let lastUID = '';
-        let lastScanTime = 0;
-
         ndef.onreading = async (event) => {
           const uid = event.serialNumber;
-          const now = Date.now();
-
-          // Block if it's a duplicate within 3 seconds
-          if (uid && uid === lastUID && (now - lastScanTime) < 3000) {
-            console.log('Duplicate scan ignored.');
-            return;
-          }
-
-          lastUID = uid;
-          lastScanTime = now;
-
           status.textContent = `Card UID: ${uid}`;
 
           try {
