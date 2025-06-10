@@ -30,15 +30,24 @@
 
     const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxhRUCxp2qcUPvW-6CM_UBiY8LvC7TEez-WY37RLTLnvx6JvzDT89VL-_62L_r0EW13Iw/exec';
 
+    let ndef;
+    let isScanning = false;
+
     startScanBtn.addEventListener('click', async () => {
+      if (isScanning) {
+        status.textContent = 'Already scanning. Tap a card.';
+        return;
+      }
+
       if (!('NDEFReader' in window)) {
         status.textContent = 'Web NFC not supported on this device.';
         return;
       }
 
       try {
-        const ndef = new NDEFReader();
+        ndef = new NDEFReader();
         await ndef.scan();
+        isScanning = true;
         status.textContent = 'Scanning... Tap a card.';
 
         ndef.onreading = async (event) => {
@@ -59,6 +68,10 @@
           } catch (err) {
             status.textContent = `❌ Failed to register card: ${err}`;
           }
+        };
+
+        ndef.onreadingerror = () => {
+          status.textContent = 'Error reading NFC card.';
         };
 
       } catch (error) {
