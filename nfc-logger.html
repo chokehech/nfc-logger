@@ -30,7 +30,6 @@
 
     const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxhRUCxp2qcUPvW-6CM_UBiY8LvC7TEez-WY37RLTLnvx6JvzDT89VL-_62L_r0EW13Iw/exec';
 
-    let ndef;
     let isScanning = false;
 
     startScanBtn.addEventListener('click', async () => {
@@ -45,9 +44,10 @@
       }
 
       try {
-        ndef = new NDEFReader();
+        const ndef = new NDEFReader();
         await ndef.scan();
         isScanning = true;
+
         status.textContent = 'Scanning... Tap a card.';
 
         ndef.onreading = async (event) => {
@@ -75,7 +75,7 @@
         };
 
       } catch (error) {
-        status.textContent = `Scan failed: ${error}`;
+        status.textContent = `NFC Scan Error: ${error}`;
       }
     });
   </script>
