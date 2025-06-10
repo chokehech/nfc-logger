@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>NFC Pass Verifier</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 2em; }
+    #status { margin-top: 2em; font-size: 2em; font-weight: bold; }
+    .valid { color: green; }
+    .expired { color: red; }
+    .notfound { color: orange; }
+    button { padding: 1em 2em; font-size: 1em; }
+  </style>
+</head>
+<body>
+  <h2>Bus Access Verifier</h2>
+  <button id="startScan">Tap Card to Verify</button>
+  <div id="status">Waiting...</div>
+
+  <script>
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyrbua7rqe4JvzV1WPZE_qCrtHE6IKyrkJe3IM0q7zgDGbQyu7m9H9qYWH2FoOvtRCnUg/exec';
+
+    const startScanBtn = document.getElementById('startScan');
+    const status = document.getElementById('status');
+
+    startScanBtn.addEventListener('click', async () => {
+      if (!('NDEFReader' in window)) {
+        status.textContent = 'Web NFC not supported on this device.';
+        return;
+      }
+
+      try {
+        const ndef = new NDEFReader();
+        await ndef.scan();
+        status.textContent = 'Scanning... Tap a card.';
+
+        ndef.onreading = async (event) => {
+          const uid = event.serialNumber;
+          if (!uid) {
+            status.textContent = '❌ No UID detected.';
+            return;
+          }
+
+          status.textContent = `Verifying UID: ${uid}`;
+
+          try {
+            const response = await fetch(`${GOOGLE_SCRIPT_URL}?uid=${encodeURIComponent(uid)}`);
+            const data = await response.json();
+
+            if (data.status === 'valid') {
+              status.textContent = `✅ VALID - Expires: ${data.expiry}`;
+              status.className = 'valid';
+            } else if (data.status === 'expired') {
+              status.textContent = `❌ EXPIRED - Expired: ${data.expiry}`;
+              status.className = 'expired';
+            } else {
+              status.textContent = `⚠️ NOT FOUND`;
+              status.className = 'notfound';
+            }
+          } catch (err) {
+            status.textContent = `❌ Error checking card: ${err}`;
+          }
+        };
+
+      } catch (err) {
+        status.textContent = `Scan failed: ${err}`;
+      }
+    });
+  </script>
+</body>
+</html>
