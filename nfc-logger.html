@@ -18,7 +18,7 @@
     const scanBtn = document.getElementById('scanBtn');
     const status = document.getElementById('status');
 
-    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzJJK-7TfgxLYQBYN9ht94FbqjuFFxL3JuGuvb0o7RxMeipMMN2pS-k-0o_2ex9GXZZ9A/exec';
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID_HERE/exec';
 
     scanBtn.addEventListener('click', async () => {
       if (!('NDEFReader' in window)) {
@@ -32,7 +32,12 @@
 
         status.textContent = 'Scanning... Tap a card.';
 
+        let hasScanned = false;
+
         ndef.onreading = async (event) => {
+          if (hasScanned) return; // block duplicate
+          hasScanned = true;
+
           const uid = event.serialNumber;
           status.textContent = `Card UID: ${uid}`;
 
@@ -43,6 +48,9 @@
           } catch (err) {
             status.textContent = `❌ Failed to send UID: ${err}`;
           }
+
+          // Optionally allow scanning again after 3 seconds
+          setTimeout(() => hasScanned = false, 3000);
         };
 
         ndef.onreadingerror = () => {
