@@ -2,68 +2,67 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>NFC UID Logger</title>
+  <title>Register NFC Pass</title>
   <style>
     body { font-family: sans-serif; text-align: center; padding: 2em; }
-    #status { margin-top: 1em; font-size: 1.2em; }
-    button { padding: 1em 2em; font-size: 1em; }
+    label, select, button { display: block; margin: 1em auto; font-size: 1em; }
+    #status { margin-top: 1em; font-weight: bold; }
   </style>
 </head>
 <body>
-  <h1>Tap NFC Card</h1>
-  <button id="scanBtn">Start Scan</button>
-  <div id="status">Waiting for tap...</div>
+  <h2>Cashier: Register NFC Pass</h2>
+
+  <label>Pass Duration:
+    <select id="duration">
+      <option value="1">1 Day</option>
+      <option value="3">3 Days</option>
+      <option value="5">5 Days</option>
+    </select>
+  </label>
+
+  <button id="startScan">Scan Card</button>
+  <div id="status">Waiting to scan...</div>
 
   <script>
-    const scanBtn = document.getElementById('scanBtn');
+    const startScanBtn = document.getElementById('startScan');
     const status = document.getElementById('status');
+    const durationSelect = document.getElementById('duration');
+
     const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzJJK-7TfgxLYQBYN9ht94FbqjuFFxL3JuGuvb0o7RxMeipMMN2pS-k-0o_2ex9GXZZ9A/exec';
 
-    let isScanning = false; // prevent re-attaching listeners
-
-    scanBtn.addEventListener('click', async () => {
-      if (isScanning) {
-        status.textContent = 'Already scanning. Tap a card.';
-        return;
-      }
-
+    startScanBtn.addEventListener('click', async () => {
       if (!('NDEFReader' in window)) {
-        status.textContent = 'Web NFC not supported. Use Chrome on Android.';
+        status.textContent = 'Web NFC not supported on this device.';
         return;
       }
 
       try {
         const ndef = new NDEFReader();
         await ndef.scan();
-        isScanning = true;
-
         status.textContent = 'Scanning... Tap a card.';
 
         ndef.onreading = async (event) => {
           const uid = event.serialNumber;
+          const duration = durationSelect.value;
+
           if (!uid) {
-            status.textContent = '❌ No UID detected.';
+            status.textContent = '❌ UID not detected.';
             return;
           }
 
-          status.textContent = `Card UID: ${uid}`;
-          console.log(`Sending UID to Google: ${uid}`);
+          status.textContent = `Card UID: ${uid}, ${duration} day pass`;
 
           try {
-            const response = await fetch(`${GOOGLE_SCRIPT_URL}?uid=${encodeURIComponent(uid)}`);
+            const response = await fetch(`${GOOGLE_SCRIPT_URL}?uid=${encodeURIComponent(uid)}&duration=${duration}`);
             const result = await response.text();
-            status.textContent = `✅ Sent to Google Sheets: ${result}`;
+            status.textContent = `✅ Registered: ${result}`;
           } catch (err) {
-            status.textContent = `❌ Failed to send UID: ${err}`;
+            status.textContent = `❌ Failed to register card: ${err}`;
           }
         };
 
-        ndef.onreadingerror = () => {
-          status.textContent = 'Error reading NFC card.';
-        };
-
       } catch (error) {
-        status.textContent = `NFC Scan Error: ${error}`;
+        status.textContent = `Scan failed: ${error}`;
       }
     });
   </script>
