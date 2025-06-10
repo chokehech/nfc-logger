@@ -18,7 +18,7 @@
     const scanBtn = document.getElementById('scanBtn');
     const status = document.getElementById('status');
 
-    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID_HERE/exec';
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzJJK-7TfgxLYQBYN9ht94FbqjuFFxL3JuGuvb0o7RxMeipMMN2pS-k-0o_2ex9GXZZ9A/exec';
 
     scanBtn.addEventListener('click', async () => {
       if (!('NDEFReader' in window)) {
@@ -32,23 +32,9 @@
 
         status.textContent = 'Scanning... Tap a card.';
 
-        let isCooldown = false;
-
         ndef.onreading = async (event) => {
-          if (isCooldown) {
-            console.log('Scan ignored: cooldown active');
-            return;
-          }
-
           const uid = event.serialNumber;
-          if (!uid) {
-            status.textContent = '❌ No UID detected.';
-            return;
-          }
-
-          isCooldown = true;
           status.textContent = `Card UID: ${uid}`;
-          console.log(`Sending UID to Google: ${uid}`);
 
           try {
             const response = await fetch(`${GOOGLE_SCRIPT_URL}?uid=${encodeURIComponent(uid)}`);
@@ -57,11 +43,6 @@
           } catch (err) {
             status.textContent = `❌ Failed to send UID: ${err}`;
           }
-
-          setTimeout(() => {
-            isCooldown = false;
-            status.textContent = 'Ready for next card.';
-          }, 3000);
         };
 
         ndef.onreadingerror = () => {
