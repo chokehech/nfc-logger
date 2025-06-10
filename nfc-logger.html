@@ -32,26 +32,21 @@
 
         status.textContent = 'Scanning... Tap a card.';
 
-        let lastUID = '';
-        let lastScanTime = 0;
+        let isCooldown = false;
 
         ndef.onreading = async (event) => {
-          const uid = event.serialNumber;
-          const now = Date.now();
+          if (isCooldown) {
+            console.log('Scan ignored: cooldown active');
+            return;
+          }
 
+          const uid = event.serialNumber;
           if (!uid) {
             status.textContent = '❌ No UID detected.';
             return;
           }
 
-          if (uid === lastUID && (now - lastScanTime) < 3000) {
-            console.log('Duplicate scan blocked');
-            return;
-          }
-
-          lastUID = uid;
-          lastScanTime = now;
-
+          isCooldown = true;
           status.textContent = `Card UID: ${uid}`;
           console.log(`Sending UID to Google: ${uid}`);
 
@@ -62,6 +57,11 @@
           } catch (err) {
             status.textContent = `❌ Failed to send UID: ${err}`;
           }
+
+          setTimeout(() => {
+            isCooldown = false;
+            status.textContent = 'Ready for next card.';
+          }, 3000);
         };
 
         ndef.onreadingerror = () => {
