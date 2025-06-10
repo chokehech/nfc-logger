@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>NFC UID Logger</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 2em; }
+    #status { margin-top: 1em; font-size: 1.2em; }
+    button { padding: 1em 2em; font-size: 1em; }
+  </style>
+</head>
+<body>
+  <h1>Tap NFC Card</h1>
+  <button id="scanBtn">Start Scan</button>
+  <div id="status">Waiting for tap...</div>
+
+  <script>
+    const scanBtn = document.getElementById('scanBtn');
+    const status = document.getElementById('status');
+
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzJJK-7TfgxLYQBYN9ht94FbqjuFFxL3JuGuvb0o7RxMeipMMN2pS-k-0o_2ex9GXZZ9A/exec';
+
+    scanBtn.addEventListener('click', async () => {
+      if (!('NDEFReader' in window)) {
+        status.textContent = 'Web NFC not supported. Use Chrome on Android.';
+        return;
+      }
+
+      try {
+        const ndef = new NDEFReader();
+        await ndef.scan();
+
+        status.textContent = 'Scanning... Tap a card.';
+
+        ndef.onreading = async (event) => {
+          const uid = event.serialNumber;
+          status.textContent = `Card UID: ${uid}`;
+
+          try {
+            const response = await fetch(`${GOOGLE_SCRIPT_URL}?uid=${encodeURIComponent(uid)}`);
+            const result = await response.text();
+            status.textContent = `✅ Sent to Google Sheets: ${result}`;
+          } catch (err) {
+            status.textContent = `❌ Failed to send UID: ${err}`;
+          }
+        };
+
+        ndef.onreadingerror = () => {
+          status.textContent = 'Error reading NFC card.';
+        };
+
+      } catch (error) {
+        status.textContent = `NFC Scan Error: ${error}`;
+      }
+    });
+  </script>
+</body>
+</html>
