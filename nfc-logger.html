@@ -28,7 +28,7 @@
     const status = document.getElementById('status');
     const durationSelect = document.getElementById('duration');
 
-    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxxy-l4XrRcTIUCKuhLrsWVPTZ-ORBdASsFCQ5QYNbgeWECtzIdzewv0tL-QfTtkiARZw/exec';
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz6FQBpf9zn2zbA0Dy5dWoEL43ZJe0-QAsfsZdKcbNEN43glJAJIqBz-d0YIMICxgi86A/exec';
 
     let isScanning = false;
 
@@ -64,7 +64,15 @@
           try {
             const response = await fetch(`${GOOGLE_SCRIPT_URL}?uid=${encodeURIComponent(uid)}&duration=${duration}`);
             const result = await response.text();
-            status.textContent = `✅ Registered: ${result}`;
+            if (result.includes("status=registered")) {
+              status.textContent = "✅ New card registered";
+            } else if (result.includes("status=already_registered")) {
+              status.textContent = "⚠️ Card already active or eligible";
+            } else if (result.includes("re-registered")) {
+              status.textContent = "🔁 Card re-registered (was expired)";
+            } else {
+              status.textContent = `❌ Unknown response: ${result}`;
+            }
           } catch (err) {
             status.textContent = `❌ Failed to register card: ${err}`;
           }
