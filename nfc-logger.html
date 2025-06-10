@@ -32,14 +32,28 @@
 
         status.textContent = 'Scanning... Tap a card.';
 
-        let hasScanned = false;
+        let lastUID = '';
+        let lastScanTime = 0;
 
         ndef.onreading = async (event) => {
-          if (hasScanned) return; // block duplicate
-          hasScanned = true;
-
           const uid = event.serialNumber;
+          const now = Date.now();
+
+          if (!uid) {
+            status.textContent = '❌ No UID detected.';
+            return;
+          }
+
+          if (uid === lastUID && (now - lastScanTime) < 3000) {
+            console.log('Duplicate scan blocked');
+            return;
+          }
+
+          lastUID = uid;
+          lastScanTime = now;
+
           status.textContent = `Card UID: ${uid}`;
+          console.log(`Sending UID to Google: ${uid}`);
 
           try {
             const response = await fetch(`${GOOGLE_SCRIPT_URL}?uid=${encodeURIComponent(uid)}`);
@@ -48,9 +62,6 @@
           } catch (err) {
             status.textContent = `❌ Failed to send UID: ${err}`;
           }
-
-          // Optionally allow scanning again after 3 seconds
-          setTimeout(() => hasScanned = false, 3000);
         };
 
         ndef.onreadingerror = () => {
