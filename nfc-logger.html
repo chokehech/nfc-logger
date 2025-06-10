@@ -32,7 +32,7 @@
 
         status.textContent = 'Scanning... Tap a card.';
 
-        let lastUID = null;
+        let lastUID = '';
         let lastScanTime = 0;
 
         ndef.onreading = async (event) => {
@@ -40,7 +40,7 @@
           const now = Date.now();
 
           // Block if it's a duplicate within 3 seconds
-          if (uid === lastUID && (now - lastScanTime) < 3000) {
+          if (uid && uid === lastUID && (now - lastScanTime) < 3000) {
             console.log('Duplicate scan ignored.');
             return;
           }
