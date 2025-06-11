@@ -5,7 +5,7 @@
   <title>Register NFC Pass</title>
   <style>
     body { font-family: sans-serif; text-align: center; padding: 2em; }
-    label, select, button { display: block; margin: 1em auto; font-size: 1em; }
+    label, select { display: block; margin: 1em auto; font-size: 1em; }
     #status { margin-top: 1em; font-weight: bold; }
   </style>
 </head>
@@ -20,24 +20,15 @@
     </select>
   </label>
 
-  <button id="startScan">Scan Card</button>
-  <div id="status">Waiting to scan...</div>
+  <div id="status">Initializing NFC scanner...</div>
 
   <script>
-    const startScanBtn = document.getElementById('startScan');
     const status = document.getElementById('status');
     const durationSelect = document.getElementById('duration');
 
     const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzVBPOSMIW8_SvFIHMjNiZHvy3RyOJvDQYIu_Yltg_c3krKnqimDiZX5MVHKSieCPIT0g/exec';
 
-    let isScanning = false;
-
-    startScanBtn.addEventListener('click', async () => {
-      if (isScanning) {
-        status.textContent = 'Already scanning. Tap a card.';
-        return;
-      }
-
+    async function startScan() {
       if (!('NDEFReader' in window)) {
         status.textContent = 'Web NFC not supported on this device.';
         return;
@@ -46,9 +37,7 @@
       try {
         const ndef = new NDEFReader();
         await ndef.scan();
-        isScanning = true;
-
-        status.textContent = 'Scanning... Tap a card.';
+        status.textContent = 'Ready. Tap a card.';
 
         ndef.onreading = async (event) => {
           const uid = event.serialNumber;
@@ -59,20 +48,21 @@
             return;
           }
 
-          status.textContent = `Card UID: ${uid}, ${duration} day pass`;
+          status.textContent = `⏳ Registering card UID: ${uid} (${duration} day pass)...`;
 
           try {
             const response = await fetch(`${GOOGLE_SCRIPT_URL}?uid=${encodeURIComponent(uid)}&duration=${duration}`);
             const result = await response.text();
-          if (result.includes("status=registered")) {
-            status.textContent = "✅ New card registered";
-          } else if (result.includes("status=re_registered")) {
-            status.textContent = "🔁 Expired card re-registered";
-          } else if (result.includes("status=already_registered")) {
-            status.textContent = "⚠️ Card is already active or eligible";
-          } else {
-            status.textContent = `❌ Unknown response: ${result}`;
-          }
+
+            if (result.includes("status=registered")) {
+              status.textContent = "✅ New card registered";
+            } else if (result.includes("status=re_registered")) {
+              status.textContent = "🔁 Expired card re-registered";
+            } else if (result.includes("status=already_registered")) {
+              status.textContent = "⚠️ Card is already active or eligible";
+            } else {
+              status.textContent = `❌ Unknown response: ${result}`;
+            }
 
           } catch (err) {
             status.textContent = `❌ Failed to register card: ${err}`;
@@ -80,13 +70,16 @@
         };
 
         ndef.onreadingerror = () => {
-          status.textContent = 'Error reading NFC card.';
+          status.textContent = '❌ Error reading NFC card.';
         };
 
       } catch (error) {
-        status.textContent = `NFC Scan Error: ${error}`;
+        status.textContent = `❌ NFC Scan Error: ${error}`;
       }
-    });
+    }
+
+    // Auto-start on load
+    window.addEventListener('load', startScan);
   </script>
 </body>
 </html>
