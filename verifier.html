@@ -9,30 +9,26 @@
     .valid { color: green; }
     .expired { color: red; }
     .notfound { color: orange; }
-    button { padding: 1em 2em; font-size: 1em; }
   </style>
 </head>
 <body>
   <h2>Bus Access Verifier</h2>
-  <button id="startScan">Tap Card to Verify</button>
-  <div id="status">Waiting...</div>
+  <div id="status">Initializing NFC scanner...</div>
 
   <script>
     const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx4C81uFs3DLgorkW7M5PaXWcrQu05vwpRotNWMAKCcqoGSGCRii7Ng8mM8Ef5YSzl1NQ/exec';
-
-    const startScanBtn = document.getElementById('startScan');
     const status = document.getElementById('status');
 
-    startScanBtn.addEventListener('click', async () => {
+    async function startScan() {
       if (!('NDEFReader' in window)) {
-        status.textContent = 'Web NFC not supported on this device.';
+        status.textContent = '❌ Web NFC not supported. Use Chrome on Android.';
         return;
       }
 
       try {
         const ndef = new NDEFReader();
         await ndef.scan();
-        status.textContent = 'Scanning... Tap a card.';
+        status.textContent = 'Ready. Tap a card.';
 
         ndef.onreading = async (event) => {
           const uid = event.serialNumber;
@@ -42,30 +38,39 @@
           }
 
           status.textContent = `Verifying UID: ${uid}`;
+          status.className = '';
 
           try {
             const response = await fetch(`${GOOGLE_SCRIPT_URL}?uid=${encodeURIComponent(uid)}`);
             const data = await response.json();
 
             if (data.status === 'valid') {
-              status.textContent = `✅ VALID - Expires: ${data.expiry}`;
+              status.textContent = `✅ VALID – Expires: ${data.expiry}`;
               status.className = 'valid';
             } else if (data.status === 'expired') {
-              status.textContent = `❌ EXPIRED - Expired: ${data.expiry}`;
+              status.textContent = `❌ EXPIRED – Expired: ${data.expiry}`;
               status.className = 'expired';
             } else {
               status.textContent = `⚠️ NOT FOUND`;
               status.className = 'notfound';
             }
           } catch (err) {
-            status.textContent = `❌ Error checking card: ${err}`;
+            status.textContent = `❌ Error verifying card: ${err}`;
+            status.className = '';
           }
         };
 
+        ndef.onreadingerror = () => {
+          status.textContent = '❌ Error reading NFC card.';
+        };
+
       } catch (err) {
-        status.textContent = `Scan failed: ${err}`;
+        status.textContent = `❌ NFC Scan Error: ${err}`;
       }
-    });
+    }
+
+    // Automatically start scanning when the page loads
+    window.addEventListener('load', startScan);
   </script>
 </body>
 </html>
