@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>NFC Pass Verifier</title>
   <style>
-    body { font-family: sans-serif; text-align: center; padding: 2em; }
+    body { font-family: sans-serif; text-align: center; padding: 4em; }
     #status { margin-top: 2em; font-size: 2em; font-weight: bold; }
     .valid { color: green; }
     .expired { color: red; }
@@ -12,11 +12,11 @@
   </style>
 </head>
 <body>
-  <h2>Bus Access Verifier</h2>
+  <h2>TAP CARD</h2>
   <div id="status">Initializing NFC scanner...</div>
 
   <script>
-    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx4C81uFs3DLgorkW7M5PaXWcrQu05vwpRotNWMAKCcqoGSGCRii7Ng8mM8Ef5YSzl1NQ/exec';
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwd_qmPmyakuqpk0Z0F-hNb15IRt9Tqm9QR2NmP2RGnBYUmGHqLLEL90S4AovUrEuyOLw/exec';
     const status = document.getElementById('status');
 
     async function startScan() {
