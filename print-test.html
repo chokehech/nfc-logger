@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sunmi Printer Test</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body>
+  <h1>Print to Sunmi Internal Printer</h1>
+
+  <textarea id="text" rows="5" cols="50">Hello, this is a Sunmi test print!</textarea><br><br>
+  <button onclick="printToSunmi()">Print</button>
+  <p id="status"></p>
+
+  <script>
+    function printToSunmi() {
+      const text = document.getElementById("text").value;
+      const status = document.getElementById("status");
+
+      if (typeof window.sunmiInnerPrinter === "undefined") {
+        status.textContent = "❌ Sunmi printer interface not available. Are you running this inside a Sunmi WebView or wrapper app?";
+        return;
+      }
+
+      try {
+        status.textContent = "🖨️ Sending print job...";
+        window.sunmiInnerPrinter.printText(text + "\n\n");
+        window.sunmiInnerPrinter.lineWrap(3); // optional line feed
+        status.textContent = "✅ Printed successfully!";
+      } catch (err) {
+        console.error(err);
+        status.textContent = "❌ Print failed: " + err.message;
+      }
+    }
+  </script>
+</body>
+</html>
